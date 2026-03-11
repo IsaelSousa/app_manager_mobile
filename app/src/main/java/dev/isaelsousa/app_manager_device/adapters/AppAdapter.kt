@@ -33,18 +33,17 @@ class AppAdapter(
 
         holder.tvTitle.text = app.title
         holder.tvVersion.text = "Versão: ${app.version}"
-        holder.tvUri.text = app.uri
         holder.ivIcon.load(app.iconUri);
 
         holder.btnInstall.setOnClickListener {
             onInstallClick(app)
         }
 
-        if (app.uri.length == 0) {
-            holder.btnInstall.text = "Baixar"
-        } else {
-            holder.btnInstall.text = "Instalar"
-        }
+//        if (app.uri.length == 0) {
+//            holder.btnInstall.text = "Baixar"
+//        } else {
+//            holder.btnInstall.text = "Instalar"
+//        }
 
         holder.itemView.alpha = if (app.isDeleted) 0.5f else 1.0f
     }

@@ -18,7 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import dev.isaelsousa.app_manager_device.R
 import dev.isaelsousa.app_manager_device.models.AppManager
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.gson.Gson
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import dev.isaelsousa.app_manager_device.data.network.client
 import dev.isaelsousa.app_manager_device.data.network.retrofit
 import dev.isaelsousa.app_manager_device.data.remote.AppManagerApi
@@ -30,15 +30,22 @@ import java.io.File
 class MainActivity : AppCompatActivity() {
     private val api = retrofit.create(AppManagerApi::class.java)
     private lateinit var adapter: AppAdapter
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
+        swipeRefreshLayout.setOnRefreshListener {
+            fetchData()
         }
 
         recycler();
@@ -66,18 +73,20 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                if (app.uri.isNullOrBlank()) {
-                    Toast.makeText(this@MainActivity, "Baixando APK...", Toast.LENGTH_SHORT).show()
-                    val localPath = downloadApk(app.url, "${app.title}.apk")
-                    app.uri = localPath
-
-                    val resp = api.createOrUpdate(app);
-                    if (resp.status) {
-                        fetchData();
-                    }
-                } else {
-                    installApk(app.uri)
-                }
+                fetchData();
+//                if (app.uri.isNullOrBlank()) {
+//                    Toast.makeText(this@MainActivity, "Baixando APK...", Toast.LENGTH_SHORT).show()
+//                    val localPath = downloadApk(app.url, "${app.title}.apk")
+//                    app.uri = localPath
+//
+//                    val resp = api.createOrUpdate(app);
+//                    if (resp.status) {
+//                        fetchData();
+//                    }
+//                }
+//                else {
+//                    installApk(app.uri)
+//                }
             } catch (e: Exception) {
                 Toast.makeText(this@MainActivity, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
             }
@@ -123,7 +132,6 @@ class MainActivity : AppCompatActivity() {
     private fun verifyPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (!packageManager.canRequestPackageInstalls()) {
-                // Se não tem permissão, manda o usuário para a tela de configurações
                 val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
                     data = Uri.parse("package:$packageName")
                 }
@@ -141,10 +149,13 @@ class MainActivity : AppCompatActivity() {
                 if (response.status) {
                     val list = response.data ?: emptyList()
                     adapter.updateData(list)
+                    swipeRefreshLayout.isRefreshing = false
                 } else {
+                    swipeRefreshLayout.isRefreshing = false
                     println("Erro do servidor: ${response.message}")
                 }
             } catch (e: Exception) {
+                swipeRefreshLayout.isRefreshing = false
                 println("Erro de conexão: ${e.message}")
             }
         }
