@@ -8,5 +8,6 @@ data class AppManager(
     val version: String,
     val createdAt: String,
     val lastUpdate: String,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    val devices: List<AppDevice> = mutableListOf()
 )

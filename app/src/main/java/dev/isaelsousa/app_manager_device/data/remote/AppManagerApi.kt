@@ -14,7 +14,7 @@ interface AppManagerApi {
 
     // App
     @GET("api/AppManager/list-apps")
-    suspend fun listApps(): ResponseModel<List<AppManager>>
+    suspend fun listApps(@Query("device") device: String = ""): ResponseModel<List<AppManager>>
 
     @POST("api/AppManager/create-or-update")
     suspend fun createOrUpdate(@Body app: AppManager): ResponseModel<AppManager>

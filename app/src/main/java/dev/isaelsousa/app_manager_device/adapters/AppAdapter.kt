@@ -8,10 +8,11 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import dev.isaelsousa.app_manager_device.R
 import dev.isaelsousa.app_manager_device.models.AppManager
+import dev.isaelsousa.app_manager_device.models.DeviceActionType
 
 class AppAdapter(
     private var appList: List<AppManager>,
-    private val onInstallClick: (AppManager) -> Unit
+    private val onInstallClick: (AppManager, type: DeviceActionType) -> Unit
 ) : RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
 
     class AppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -35,17 +36,30 @@ class AppAdapter(
         holder.tvVersion.text = "Versão: ${app.version}"
         holder.ivIcon.load(app.iconUri);
 
+        executeType(holder, app, false)
+
         holder.btnInstall.setOnClickListener {
-            onInstallClick(app)
+            executeType(holder, app, true)
         }
 
-//        if (app.uri.length == 0) {
-//            holder.btnInstall.text = "Baixar"
-//        } else {
-//            holder.btnInstall.text = "Instalar"
-//        }
-
         holder.itemView.alpha = if (app.isDeleted) 0.5f else 1.0f
+    }
+
+    fun executeType(holder: AppViewHolder, app: AppManager, click: Boolean) {
+        if (app.devices.isEmpty()) {
+            holder.btnInstall.text = "Baixar"
+            if (click) onInstallClick(app, DeviceActionType.Download)
+        } else {
+            val first = app.devices.first();
+            holder.tvUri.text = first.uri
+            if (app.version == first.version) {
+                holder.btnInstall.text = "Instalar"
+                if (click) onInstallClick(app, DeviceActionType.Install)
+            } else {
+                holder.btnInstall.text = "Atualizar"
+                if (click) onInstallClick(app, DeviceActionType.Update)
+            }
+        }
     }
 
     fun updateData(list: List<AppManager>) {

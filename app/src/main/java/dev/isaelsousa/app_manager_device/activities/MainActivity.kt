@@ -1,6 +1,7 @@
 package dev.isaelsousa.app_manager_device.activities
 
 import AppAdapter
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -19,9 +20,12 @@ import dev.isaelsousa.app_manager_device.R
 import dev.isaelsousa.app_manager_device.models.AppManager
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.gson.Gson
 import dev.isaelsousa.app_manager_device.data.network.client
 import dev.isaelsousa.app_manager_device.data.network.retrofit
 import dev.isaelsousa.app_manager_device.data.remote.AppManagerApi
+import dev.isaelsousa.app_manager_device.models.AppDevice
+import dev.isaelsousa.app_manager_device.models.DeviceActionType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -54,8 +58,8 @@ class MainActivity : AppCompatActivity() {
     fun recycler() {
         val rvAppList = findViewById<RecyclerView>(R.id.rvAppList)
 
-        adapter = AppAdapter(mutableListOf()) { app ->
-            executeInstall(app);
+        adapter = AppAdapter(mutableListOf()) { app, type ->
+            executeInstall(app, type);
         }
 
         rvAppList.layoutManager = LinearLayoutManager(this)
@@ -64,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         fetchData();
     }
 
-    private fun executeInstall(app: AppManager) {
+    private fun executeInstall(app: AppManager, type: DeviceActionType) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
             verifyPermission()
@@ -73,20 +77,38 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                fetchData();
-//                if (app.uri.isNullOrBlank()) {
-//                    Toast.makeText(this@MainActivity, "Baixando APK...", Toast.LENGTH_SHORT).show()
-//                    val localPath = downloadApk(app.url, "${app.title}.apk")
-//                    app.uri = localPath
-//
-//                    val resp = api.createOrUpdate(app);
-//                    if (resp.status) {
-//                        fetchData();
-//                    }
-//                }
-//                else {
-//                    installApk(app.uri)
-//                }
+                val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+                if (type == DeviceActionType.Download) {
+                    Toast.makeText(this@MainActivity, "Baixando APK...", Toast.LENGTH_SHORT).show()
+                    val localPath = downloadApk(app.url, "${app.title}.apk")
+                    val data = AppDevice(device = androidId, appManagerId = app.id, uri = localPath, version = app.version);
+                    val gson = Gson()
+                    println(gson.toJson(data))
+
+                    val resp = api.createOrUpdateDevice(data);
+                    if (resp.status) {
+                        fetchData();
+                    }
+                }
+
+                if (type == DeviceActionType.Install && !app.devices.isEmpty()) {
+                    val first = app.devices.first();
+                    installApk(first.uri)
+                    fetchData()
+                }
+
+                if (type == DeviceActionType.Update && !app.devices.isEmpty()) {
+                    val first = app.devices.first();
+                    Toast.makeText(this@MainActivity, "Baixando Atualização da APK...", Toast.LENGTH_SHORT).show()
+                    val localPath = downloadApk(app.url, "${app.title}.apk")
+                    first.uri = localPath
+
+                    val resp = api.createOrUpdateDevice(first);
+                    if (resp.status) {
+                        installApk(resp.data?.uri ?: "")
+                        fetchData()
+                    }
+                }
             } catch (e: Exception) {
                 Toast.makeText(this@MainActivity, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
             }
@@ -113,6 +135,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun installApk(path: String) {
+        if (path.isEmpty()) return
+
         val file = File(path)
         if (!file.exists()) throw Exception("Arquivo não encontrado")
 
@@ -141,10 +165,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("HardwareIds")
     private fun fetchData() {
         lifecycleScope.launch {
             try {
-                val response = api.listApps()
+                val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+                val response = api.listApps(androidId)
 
                 if (response.status) {
                     val list = response.data ?: emptyList()
