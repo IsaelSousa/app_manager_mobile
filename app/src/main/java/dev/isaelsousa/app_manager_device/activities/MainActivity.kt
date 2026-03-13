@@ -2,15 +2,12 @@ package dev.isaelsousa.app_manager_device.activities
 
 import AppAdapter
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -24,11 +21,11 @@ import dev.isaelsousa.app_manager_device.models.AppManager
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.gson.Gson
-import dev.isaelsousa.app_manager_device.data.network.client
-import dev.isaelsousa.app_manager_device.data.network.retrofit
+import dev.isaelsousa.app_manager_device.data.network.NetworkModule
 import dev.isaelsousa.app_manager_device.data.remote.AppManagerApi
 import dev.isaelsousa.app_manager_device.models.AppDevice
 import dev.isaelsousa.app_manager_device.models.DeviceActionType
+import dev.isaelsousa.app_manager_device.services.AppConfig
 import dev.isaelsousa.app_manager_device.utils.AppUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,7 +35,7 @@ import okio.sink
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
-    private val api = retrofit.create(AppManagerApi::class.java)
+    private lateinit var api: AppManagerApi
     private lateinit var adapter: AppAdapter
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
@@ -46,6 +43,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        api = NetworkModule.getRetrofitInstance(AppConfig.getIp(this@MainActivity)).create(AppManagerApi::class.java)
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -143,7 +142,7 @@ class MainActivity : AppCompatActivity() {
             .url(url)
             .build()
 
-        client.newCall(request).execute().use { response ->
+        NetworkModule.client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw Exception("Erro: ${response.code}")
 
             val storageDir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
