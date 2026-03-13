@@ -2,12 +2,15 @@ package dev.isaelsousa.app_manager_device.activities
 
 import AppAdapter
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -26,9 +29,12 @@ import dev.isaelsousa.app_manager_device.data.network.retrofit
 import dev.isaelsousa.app_manager_device.data.remote.AppManagerApi
 import dev.isaelsousa.app_manager_device.models.AppDevice
 import dev.isaelsousa.app_manager_device.models.DeviceActionType
+import dev.isaelsousa.app_manager_device.utils.AppUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okio.buffer
+import okio.sink
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
@@ -58,7 +64,7 @@ class MainActivity : AppCompatActivity() {
     fun recycler() {
         val rvAppList = findViewById<RecyclerView>(R.id.rvAppList)
 
-        adapter = AppAdapter(mutableListOf()) { app, type ->
+        adapter = AppAdapter(mutableListOf(), context = this@MainActivity) { app, type ->
             executeInstall(app, type);
         }
 
@@ -68,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         fetchData();
     }
 
+    @SuppressLint("HardwareIds")
     private fun executeInstall(app: AppManager, type: DeviceActionType) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
@@ -82,8 +89,9 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "Baixando APK...", Toast.LENGTH_SHORT).show()
                     val localPath = downloadApk(app.url, "${app.title}.apk")
                     val data = AppDevice(device = androidId, appManagerId = app.id, uri = localPath, version = app.version);
-                    val gson = Gson()
-                    println(gson.toJson(data))
+
+                    val json = Gson()
+                    println("Aki ${json.toJson(data)}")
 
                     val resp = api.createOrUpdateDevice(data);
                     if (resp.status) {
@@ -91,10 +99,25 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
+                if (type == DeviceActionType.Open && !app.devices.isEmpty()) {
+                    val first = app.devices.first();
+                    val packageName = AppUtils.getPackageNameFromApk(this@MainActivity, first.uri) ?: "";
+                    if (!packageName.isEmpty()) {
+                        AppUtils.openApp(packageName, this@MainActivity)
+                    }
+                }
+
                 if (type == DeviceActionType.Install && !app.devices.isEmpty()) {
                     val first = app.devices.first();
-                    installApk(first.uri)
-                    fetchData()
+
+                    val packageName = AppUtils.getPackageNameFromApk(this@MainActivity, first.uri)
+
+                    if (!AppUtils.isAppInstalled(packageName, this@MainActivity)) {
+                        installApk(first.uri)
+                        fetchData()
+                    } else {
+                        Toast.makeText(this@MainActivity, "App ja instalado!", Toast.LENGTH_SHORT).show()
+                    }
                 }
 
                 if (type == DeviceActionType.Update && !app.devices.isEmpty()) {
@@ -116,41 +139,50 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun downloadApk(url: String, fileName: String): String = withContext(Dispatchers.IO) {
-        val request = okhttp3.Request.Builder().url(url).build()
-        val response = client.newCall(request).execute()
+        val request = okhttp3.Request.Builder()
+            .url(url)
+            .build()
 
-        if (!response.isSuccessful) throw Exception("Falha ao baixar arquivo")
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw Exception("Erro: ${response.code}")
 
-        val file = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            fileName
-        )
+            val storageDir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            val file = File(storageDir, fileName)
 
-        response.body?.byteStream()?.use { input ->
-            file.outputStream().use { output ->
-                input.copyTo(output)
+            val sink = file.sink().buffer()
+            val source = response.body?.source() ?: throw Exception("Corpo vazio")
+
+            try {
+                sink.writeAll(source)
+            } finally {
+                sink.close()
+                source.close()
             }
+
+            return@withContext file.absolutePath
         }
-        return@withContext file.absolutePath
     }
 
     private fun installApk(path: String) {
         if (path.isEmpty()) return
 
         val file = File(path)
-        if (!file.exists()) throw Exception("Arquivo não encontrado")
 
-        val contentUri = FileProvider.getUriForFile(
-            this,
-            "${packageName}.fileprovider",
-            file
-        )
+        if (file.exists() && file.canRead()) {
+            val contentUri = FileProvider.getUriForFile(
+                this@MainActivity,
+                "dev.isaelsousa.app_manager_device.fileprovider",
+                file
+            )
 
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(contentUri, "application/vnd.android.package-archive")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(contentUri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+
+            this@MainActivity.startActivity(intent)
         }
-        startActivity(intent)
     }
 
     private fun verifyPermission() {

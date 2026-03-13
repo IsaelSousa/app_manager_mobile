@@ -1,3 +1,4 @@
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,9 +10,11 @@ import coil.load
 import dev.isaelsousa.app_manager_device.R
 import dev.isaelsousa.app_manager_device.models.AppManager
 import dev.isaelsousa.app_manager_device.models.DeviceActionType
+import dev.isaelsousa.app_manager_device.utils.AppUtils
 
 class AppAdapter(
     private var appList: List<AppManager>,
+    private val context: Context,
     private val onInstallClick: (AppManager, type: DeviceActionType) -> Unit
 ) : RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
 
@@ -52,7 +55,13 @@ class AppAdapter(
         } else {
             val first = app.devices.first();
             holder.tvUri.text = first.uri
-            if (app.version == first.version) {
+
+            val packageName = AppUtils.getPackageNameFromApk(context, first.uri);
+            val appInstalled = AppUtils.isAppInstalled(packageName, context);
+            if (appInstalled) {
+                holder.btnInstall.text = "Abrir"
+                if (click) onInstallClick(app, DeviceActionType.Open)
+            } else if (app.version == first.version) {
                 holder.btnInstall.text = "Instalar"
                 if (click) onInstallClick(app, DeviceActionType.Install)
             } else {
