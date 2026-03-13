@@ -33,18 +33,34 @@ import kotlinx.coroutines.withContext
 import okio.buffer
 import okio.sink
 import java.io.File
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.view.View
+import android.widget.ImageButton
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var api: AppManagerApi
     private lateinit var adapter: AppAdapter
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var rvAppList: RecyclerView
+    private lateinit var cardEmpty: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        api = NetworkModule.getRetrofitInstance(AppConfig.getIp(this@MainActivity)).create(AppManagerApi::class.java)
+        rvAppList = findViewById(R.id.rvAppList)
+        cardEmpty = findViewById(R.id.cardEmpty)
+
+        rvAppList.visibility = View.GONE
+        cardEmpty.visibility = View.VISIBLE
+
+        val btnSettings = findViewById<ImageButton>(R.id.btnSettings)
+        btnSettings.setOnClickListener { v ->
+            showSettingsDialog()
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -54,15 +70,13 @@ class MainActivity : AppCompatActivity() {
 
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
         swipeRefreshLayout.setOnRefreshListener {
-            fetchData()
+            validateDefaultServer()
         }
 
         recycler();
     }
 
     fun recycler() {
-        val rvAppList = findViewById<RecyclerView>(R.id.rvAppList)
-
         adapter = AppAdapter(mutableListOf(), context = this@MainActivity) { app, type ->
             executeInstall(app, type);
         }
@@ -70,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         rvAppList.layoutManager = LinearLayoutManager(this)
         rvAppList.adapter = adapter
 
-        fetchData();
+        validateDefaultServer()
     }
 
     @SuppressLint("HardwareIds")
@@ -83,6 +97,8 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
+                val api = NetworkModule.getRetrofitInstance(AppConfig.getBaseUrl(this@MainActivity)).create(AppManagerApi::class.java)
+
                 val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
                 if (type == DeviceActionType.Download) {
                     Toast.makeText(this@MainActivity, "Baixando APK...", Toast.LENGTH_SHORT).show()
@@ -200,11 +216,23 @@ class MainActivity : AppCompatActivity() {
     private fun fetchData() {
         lifecycleScope.launch {
             try {
+                val api = NetworkModule.getRetrofitInstance(AppConfig.getBaseUrl(this@MainActivity)).create(AppManagerApi::class.java)
+
                 val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
                 val response = api.listApps(androidId)
 
                 if (response.status) {
                     val list = response.data ?: emptyList()
+
+                    if (list.isEmpty()) {
+                        rvAppList.visibility = View.GONE
+                        cardEmpty.visibility = View.VISIBLE
+                    } else {
+                        rvAppList.visibility = View.VISIBLE
+                        cardEmpty.visibility = View.GONE
+                        adapter.updateData(list)
+                    }
+
                     adapter.updateData(list)
                     swipeRefreshLayout.isRefreshing = false
                 } else {
@@ -214,6 +242,65 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 swipeRefreshLayout.isRefreshing = false
                 println("Erro de conexão: ${e.message}")
+            }
+        }
+    }
+
+    private fun showSettingsDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_settings, null)
+        val etIpAddress = dialogView.findViewById<EditText>(R.id.etIpAddress)
+        val etPort = dialogView.findViewById<EditText>(R.id.etPort)
+        val prefsIp = AppConfig.getIp(this@MainActivity)
+        val prefsPort = AppConfig.getPort(this@MainActivity)
+
+        etIpAddress.setText(prefsIp)
+        etPort.setText(prefsPort)
+
+        AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setPositiveButton("Salvar") { _, _ ->
+                val ip = etIpAddress.text.toString()
+                val port = etPort.text.toString()
+
+                lifecycleScope.launch {
+                    val status = AppConfig.isReachable(ip, port)
+
+                    if (status) {
+                        AppConfig.saveIp(this@MainActivity, ip)
+                        AppConfig.savePort(this@MainActivity, port)
+
+                        findViewById<View>(R.id.statusIndicator).backgroundTintList =
+                            ColorStateList.valueOf(Color.GREEN)
+                        fetchData()
+                    } else {
+                        Toast.makeText(this@MainActivity, "Servidor offline", Toast.LENGTH_SHORT).show()
+                        validateDefaultServer()
+                    }
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun validateDefaultServer() {
+        val prefsIp = AppConfig.getIp(this@MainActivity)
+        val prefsPort = AppConfig.getPort(this@MainActivity)
+
+        lifecycleScope.launch {
+            val status = AppConfig.isReachable(prefsIp, prefsPort)
+
+            if (status) {
+                findViewById<View>(R.id.statusIndicator).backgroundTintList =
+                    ColorStateList.valueOf(Color.GREEN)
+                fetchData()
+            } else {
+                swipeRefreshLayout.isRefreshing = false
+                findViewById<View>(R.id.statusIndicator).backgroundTintList =
+                    ColorStateList.valueOf(Color.RED)
+                rvAppList.visibility = View.GONE
+                cardEmpty.visibility = View.VISIBLE
+                adapter.updateData(mutableListOf())
+                Toast.makeText(this@MainActivity, "Servidor offline", Toast.LENGTH_SHORT).show()
             }
         }
     }
