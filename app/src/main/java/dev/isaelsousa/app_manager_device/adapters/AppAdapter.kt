@@ -1,3 +1,4 @@
+import android.annotation.SuppressLint
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -21,7 +22,7 @@ class AppAdapter(
     class AppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvTitle: TextView = view.findViewById(R.id.tvTitle)
         val tvVersion: TextView = view.findViewById(R.id.tvVersion)
-        val tvUri: TextView = view.findViewById(R.id.tvUri)
+        val tvDeviceVersion: TextView = view.findViewById(R.id.tvDeviceVersion)
         val ivIcon: ImageView = view.findViewById(R.id.ivAppIcon)
         val btnInstall: Button = view.findViewById(R.id.btnInstall)
     }
@@ -54,11 +55,15 @@ class AppAdapter(
             if (click) onInstallClick(app, DeviceActionType.Download)
         } else {
             val first = app.devices.first();
-            holder.tvUri.text = first.uri
+            holder.tvDeviceVersion.setText("Device Version: ${first.version}")
 
             val packageName = AppUtils.getPackageNameFromApk(context, first.uri);
             val appInstalled = AppUtils.isAppInstalled(packageName, context);
-            if (appInstalled) {
+
+            if (appInstalled && app.version != first.version) {
+                holder.btnInstall.text = "Atualizar"
+                if (click) onInstallClick(app, DeviceActionType.Update)
+            } else if (appInstalled) {
                 holder.btnInstall.text = "Abrir"
                 if (click) onInstallClick(app, DeviceActionType.Open)
             } else if (app.version == first.version) {
@@ -71,6 +76,7 @@ class AppAdapter(
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun updateData(list: List<AppManager>) {
         this.appList = list;
         notifyDataSetChanged()

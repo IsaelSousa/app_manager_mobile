@@ -1,8 +1,10 @@
 package dev.isaelsousa.app_manager_device.activities
 
 import AppAdapter
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -39,6 +41,17 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.view.View
 import android.widget.ImageButton
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import dev.isaelsousa.app_manager_device.services.UpdateCheckWorker
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
     private lateinit var adapter: AppAdapter
@@ -50,6 +63,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        setupUpdateWorker()
 
         rvAppList = findViewById(R.id.rvAppList)
         cardEmpty = findViewById(R.id.cardEmpty)
@@ -105,9 +120,6 @@ class MainActivity : AppCompatActivity() {
                     val localPath = downloadApk(app.url, "${app.title}.apk")
                     val data = AppDevice(device = androidId, appManagerId = app.id, uri = localPath, version = app.version);
 
-                    val json = Gson()
-                    println("Aki ${json.toJson(data)}")
-
                     val resp = api.createOrUpdateDevice(data);
                     if (resp.status) {
                         fetchData();
@@ -140,6 +152,7 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "Baixando Atualização da APK...", Toast.LENGTH_SHORT).show()
                     val localPath = downloadApk(app.url, "${app.title}.apk")
                     first.uri = localPath
+                    first.appManagerId = app.id
 
                     val resp = api.createOrUpdateDevice(first);
                     if (resp.status) {
@@ -303,5 +316,38 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this@MainActivity, "Servidor offline", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun setupUpdateWorker() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
+
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiresBatteryNotLow(true)
+            .build()
+
+        val updateRequest = PeriodicWorkRequestBuilder<UpdateCheckWorker>(24, TimeUnit.HOURS)
+            .setConstraints(constraints)
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.HOURS)
+            .build()
+
+        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+            "CheckAppUpdates",
+            ExistingPeriodicWorkPolicy.KEEP,
+            updateRequest)
+
+        //To Test Notification
+//        val updateRequest = OneTimeWorkRequestBuilder<UpdateCheckWorker>()
+//            .setConstraints(constraints)
+//            .build()
+//
+//        WorkManager.getInstance(applicationContext).enqueue(updateRequest)
+
+
     }
 }

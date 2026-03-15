@@ -1,3 +1,13 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+val properties = Properties().apply {
+    val propertiesFile = rootProject.file("local.properties")
+    if (propertiesFile.exists()) {
+        load(FileInputStream(propertiesFile))
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,6 +16,19 @@ plugins {
 android {
     namespace = "dev.isaelsousa.app_manager_device"
     compileSdk = 36
+
+    signingConfigs {
+        create("release") {
+            val path = properties.getProperty("keystore.path")
+            if (!path.isNullOrEmpty()) {
+                storeFile = file(path)
+            }
+
+            storePassword = properties.getProperty("keystore.password")
+            keyAlias = properties.getProperty("key.alias")
+            keyPassword = properties.getProperty("key.password")
+        }
+    }
 
     defaultConfig {
         applicationId = "dev.isaelsousa.app_manager_device"
@@ -19,7 +42,9 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("release")
+            
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -51,6 +76,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.filament.android)
+    implementation(libs.androidx.work.runtime.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

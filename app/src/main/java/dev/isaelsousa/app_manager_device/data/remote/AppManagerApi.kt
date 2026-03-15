@@ -3,6 +3,7 @@ package dev.isaelsousa.app_manager_device.data.remote
 import dev.isaelsousa.app_manager_device.data.model.ResponseModel
 import dev.isaelsousa.app_manager_device.models.AppDevice
 import dev.isaelsousa.app_manager_device.models.AppManager
+import dev.isaelsousa.app_manager_device.models.CheckUpdate
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -32,4 +33,9 @@ interface AppManagerApi {
 
     @DELETE("api/AppDevice/delete/{id}")
     suspend fun deleteDevice(@Path("id") id: Int): ResponseModel<Boolean>
+
+    // Check Update
+
+    @GET("api/CheckUpdate/to-update")
+    suspend fun checkUpdate(@Query("device") device: String): ResponseModel<List<CheckUpdate>>
 }
