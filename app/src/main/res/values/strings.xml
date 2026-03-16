@@ -1,3 +1,31 @@
 <resources>
     <string name="app_name">App Manager</string>
+    <string name="configuration">Configuration</string>
+    <string name="connection_configuration">Connection Configuration</string>
+    <string name="ip_address">IP Address</string>
+    <string name="port">Port (ex: 8080)</string>
+    <string name="app_icon">App Icon</string>
+    <string name="install">Install</string>
+    <string name="downloading_app">Downloading App...</string>
+    <string name="app_already_installed">App already installed</string>
+    <string name="downloading_app_update">Downloading App Update</string>
+    <string name="error">Error</string>
+    <string name="empty">Empty</string>
+    <string name="authorize_installation">Please authorize the installation to proceed.</string>
+    <string name="server_error">Server Error</string>
+    <string name="connection_error">Connection Error</string>
+    <string name="save">Save</string>
+    <string name="offline_server">Offline server</string>
+    <string name="cancel">Cancel</string>
+    <string name="version">Version</string>
+    <string name="download">Download</string>
+    <string name="device_version">Device Version</string>
+    <string name="update">Update</string>
+    <string name="open">Open</string>
+    <string name="app_updates">App Updates</string>
+    <string name="alert_apk_available">Alerts when new APKs are available</string>
+    <string name="other_applications">Other Applications</string>
+    <string name="apps_have_new_version">apps have new versions</string>
+    <string name="available_updates">Available Updates</string>
+    <string name="could_not_open_the_app">Could not open the app.</string>
 </resources>

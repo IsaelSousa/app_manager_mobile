@@ -59,10 +59,10 @@ class UpdateCheckWorker(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Atualizações de Apps",
+                context.getString(R.string.app_updates),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Avisa quando há novos APKs disponíveis"
+                description = context.getString(R.string.alert_apk_available)
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -72,7 +72,7 @@ class UpdateCheckWorker(
             inboxStyle.addLine("${app.appName}: v${app.version}")
         }
         if (updates.size > 5) {
-            inboxStyle.setSummaryText("+${updates.size - 5} outros aplicativos")
+            inboxStyle.setSummaryText("+${updates.size - 5} ${R.string.other_applications}")
         }
 
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -85,8 +85,8 @@ class UpdateCheckWorker(
 
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_download)
-            .setContentTitle("Atualizações disponíveis")
-            .setContentText("${updates.size} apps possuem novas versões")
+            .setContentTitle(context.getString(R.string.available_updates))
+            .setContentText("${updates.size} ${context.getString(R.string.apps_have_new_version)}")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setStyle(inboxStyle)
             .setContentIntent(pendingIntent)

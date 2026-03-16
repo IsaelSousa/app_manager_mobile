@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
+import dev.isaelsousa.app_manager_device.R
 
 class AppUtils {
     companion object {
@@ -40,7 +41,7 @@ class AppUtils {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
             } else {
-                Toast.makeText(context, "Não foi possível abrir o app.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.could_not_open_the_app, Toast.LENGTH_SHORT).show()
             }
         }
     }

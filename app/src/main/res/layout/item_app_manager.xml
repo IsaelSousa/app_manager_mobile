@@ -17,7 +17,7 @@
             android:id="@+id/ivAppIcon"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:contentDescription="Ícone do Aplicativo"
+            android:contentDescription="@string/app_icon"
             android:scaleType="centerInside"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -47,7 +47,7 @@
             android:textColor="#757575"
             app:layout_constraintStart_toEndOf="@+id/ivAppIcon"
             app:layout_constraintTop_toBottomOf="@id/tvTitle"
-            tools:text="Versão: 1.0.2" />
+            tools:text="Version: 1.0.2" />
 
         <TextView
             android:id="@+id/tvDeviceVersion"
@@ -69,7 +69,7 @@
             android:id="@+id/btnInstall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Instalar"
+            android:text="@string/install"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

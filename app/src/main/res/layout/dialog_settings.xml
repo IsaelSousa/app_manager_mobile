@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Configurações de Conexão"
+        android:text="@string/connection_configuration"
         android:textSize="18sp"
         android:textStyle="bold"
         android:layout_marginBottom="16dp" />
@@ -23,7 +23,7 @@
             android:id="@+id/etIpAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Endereço IP"
+            android:hint="@string/ip_address"
             android:inputType="number|textUri"
             android:digits="0123456789." />
     </com.google.android.material.textfield.TextInputLayout>
@@ -37,7 +37,7 @@
             android:id="@+id/etPort"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Porta (ex: 8080)"
+            android:hint="@string/port"
             android:inputType="number"
             android:maxLength="5" />
     </com.google.android.material.textfield.TextInputLayout>

@@ -1,3 +1,31 @@
 <resources>
-    <string name="app_name">app_manager_device</string>
+    <string name="app_name">App Manager</string>
+    <string name="configuration">Configurações</string>
+    <string name="connection_configuration">Configurações de Conexão</string>
+    <string name="ip_address">Endereço IP</string>
+    <string name="port">Porta (ex: 8080)</string>
+    <string name="app_icon">Ícone do Aplicativo</string>
+    <string name="install">Instalar</string>
+    <string name="downloading_app">Baixando App...</string>
+    <string name="app_already_installed">Aplicativo já instalado</string>
+    <string name="downloading_app_update">Baixando Atualização do App</string>
+    <string name="error">Erro</string>
+    <string name="empty">Vazio</string>
+    <string name="authorize_installation">Por favor, autorize a instalação para continuar.</string>
+    <string name="server_error">Erro do servidor</string>
+    <string name="connection_error">Erro de Conexão</string>
+    <string name="save">Salvar</string>
+    <string name="offline_server">Servidor offline</string>
+    <string name="cancel">Cancelar</string>
+    <string name="version">Versão</string>
+    <string name="download">Baixar</string>
+    <string name="device_version">Versão do Dispositivo</string>
+    <string name="update">Atualizar</string>
+    <string name="open">Abrir</string>
+    <string name="app_updates">Atualizações de Apps</string>
+    <string name="alert_apk_available">Avisa quando há novos APKs disponíveis</string>
+    <string name="other_applications">Outros Aplicativos</string>
+    <string name="apps_have_new_version">apps possuem novas versões</string>
+    <string name="available_updates">Atualizações Disponíveis</string>
+    <string name="could_not_open_the_app">Não foi possível abrir o app.</string>
 </resources>

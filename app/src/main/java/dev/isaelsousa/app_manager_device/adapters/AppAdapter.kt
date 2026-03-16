@@ -33,11 +33,12 @@ class AppAdapter(
         return AppViewHolder(view)
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: AppViewHolder, position: Int) {
         val app = appList[position]
 
         holder.tvTitle.text = app.title
-        holder.tvVersion.text = "Versão: ${app.version}"
+        holder.tvVersion.text = "${context.getString(R.string.version)}: ${app.version}"
         holder.ivIcon.load(app.iconUri);
 
         executeType(holder, app, false)
@@ -49,28 +50,29 @@ class AppAdapter(
         holder.itemView.alpha = if (app.isDeleted) 0.5f else 1.0f
     }
 
+    @SuppressLint("SetTextI18n")
     fun executeType(holder: AppViewHolder, app: AppManager, click: Boolean) {
         if (app.devices.isEmpty()) {
-            holder.btnInstall.text = "Baixar"
+            holder.btnInstall.text = context.getString(R.string.download)
             if (click) onInstallClick(app, DeviceActionType.Download)
         } else {
             val first = app.devices.first();
-            holder.tvDeviceVersion.setText("Device Version: ${first.version}")
+            holder.tvDeviceVersion.text = "${context.getString(R.string.device_version)}: ${first.version}"
 
             val packageName = AppUtils.getPackageNameFromApk(context, first.uri);
             val appInstalled = AppUtils.isAppInstalled(packageName, context);
 
             if (appInstalled && app.version != first.version) {
-                holder.btnInstall.text = "Atualizar"
+                holder.btnInstall.text = context.getString(R.string.update)
                 if (click) onInstallClick(app, DeviceActionType.Update)
             } else if (appInstalled) {
-                holder.btnInstall.text = "Abrir"
+                holder.btnInstall.text = context.getString(R.string.open)
                 if (click) onInstallClick(app, DeviceActionType.Open)
             } else if (app.version == first.version) {
-                holder.btnInstall.text = "Instalar"
+                holder.btnInstall.text = context.getString(R.string.install)
                 if (click) onInstallClick(app, DeviceActionType.Install)
             } else {
-                holder.btnInstall.text = "Atualizar"
+                holder.btnInstall.text = context.getString(R.string.update)
                 if (click) onInstallClick(app, DeviceActionType.Update)
             }
         }

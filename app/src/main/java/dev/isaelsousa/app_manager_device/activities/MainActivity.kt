@@ -22,7 +22,6 @@ import dev.isaelsousa.app_manager_device.R
 import dev.isaelsousa.app_manager_device.models.AppManager
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.gson.Gson
 import dev.isaelsousa.app_manager_device.data.network.NetworkModule
 import dev.isaelsousa.app_manager_device.data.remote.AppManagerApi
 import dev.isaelsousa.app_manager_device.models.AppDevice
@@ -116,7 +115,7 @@ class MainActivity : AppCompatActivity() {
 
                 val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
                 if (type == DeviceActionType.Download) {
-                    Toast.makeText(this@MainActivity, "Baixando APK...", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, R.string.downloading_app, Toast.LENGTH_SHORT).show()
                     val localPath = downloadApk(app.url, "${app.title}.apk")
                     val data = AppDevice(device = androidId, appManagerId = app.id, uri = localPath, version = app.version);
 
@@ -143,13 +142,13 @@ class MainActivity : AppCompatActivity() {
                         installApk(first.uri)
                         fetchData()
                     } else {
-                        Toast.makeText(this@MainActivity, "App ja instalado!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, R.string.app_already_installed, Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 if (type == DeviceActionType.Update && !app.devices.isEmpty()) {
                     val first = app.devices.first();
-                    Toast.makeText(this@MainActivity, "Baixando Atualização da APK...", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, R.string.downloading_app_update, Toast.LENGTH_SHORT).show()
                     val localPath = downloadApk(app.url, "${app.title}.apk")
                     first.uri = localPath
                     first.appManagerId = app.id
@@ -161,7 +160,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@MainActivity, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, "${getString(R.string.error)}: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -172,13 +171,13 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         NetworkModule.client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) throw Exception("Erro: ${response.code}")
+            if (!response.isSuccessful) throw Exception("${getString(R.string.error)}: ${response.code}")
 
             val storageDir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
             val file = File(storageDir, fileName)
 
             val sink = file.sink().buffer()
-            val source = response.body?.source() ?: throw Exception("Corpo vazio")
+            val source = response.body?.source() ?: throw Exception("${getString(R.string.empty)}")
 
             try {
                 sink.writeAll(source)
@@ -220,7 +219,7 @@ class MainActivity : AppCompatActivity() {
                     data = Uri.parse("package:$packageName")
                 }
                 startActivity(intent)
-                Toast.makeText(this, "Por favor, autorize a instalação para continuar.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, R.string.authorize_installation, Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -250,11 +249,11 @@ class MainActivity : AppCompatActivity() {
                     swipeRefreshLayout.isRefreshing = false
                 } else {
                     swipeRefreshLayout.isRefreshing = false
-                    println("Erro do servidor: ${response.message}")
+                    println("${getString(R.string.server_error)}: ${response.message}")
                 }
             } catch (e: Exception) {
                 swipeRefreshLayout.isRefreshing = false
-                println("Erro de conexão: ${e.message}")
+                println("${getString(R.string.connection_error)}: ${e.message}")
             }
         }
     }
@@ -271,7 +270,7 @@ class MainActivity : AppCompatActivity() {
 
         AlertDialog.Builder(this)
             .setView(dialogView)
-            .setPositiveButton("Salvar") { _, _ ->
+            .setPositiveButton(R.string.save) { _, _ ->
                 val ip = etIpAddress.text.toString()
                 val port = etPort.text.toString()
 
@@ -286,12 +285,12 @@ class MainActivity : AppCompatActivity() {
                             ColorStateList.valueOf(Color.GREEN)
                         fetchData()
                     } else {
-                        Toast.makeText(this@MainActivity, "Servidor offline", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, R.string.offline_server, Toast.LENGTH_SHORT).show()
                         validateDefaultServer()
                     }
                 }
             }
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -313,7 +312,7 @@ class MainActivity : AppCompatActivity() {
                 rvAppList.visibility = View.GONE
                 cardEmpty.visibility = View.VISIBLE
                 adapter.updateData(mutableListOf())
-                Toast.makeText(this@MainActivity, "Servidor offline", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, R.string.offline_server, Toast.LENGTH_SHORT).show()
             }
         }
     }
