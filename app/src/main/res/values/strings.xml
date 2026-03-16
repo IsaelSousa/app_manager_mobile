@@ -28,4 +28,5 @@
     <string name="apps_have_new_version">apps have new versions</string>
     <string name="available_updates">Available Updates</string>
     <string name="could_not_open_the_app">Could not open the app.</string>
+    <string name="empty_list">Your list is empty</string>
 </resources>
