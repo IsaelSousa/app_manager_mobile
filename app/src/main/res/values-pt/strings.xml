@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">App Manager</string>
+    <string name="app_name">Sequor Launcher</string>
     <string name="configuration">Configurações</string>
     <string name="connection_configuration">Configurações de Conexão</string>
     <string name="ip_address">Endereço IP</string>
@@ -29,4 +29,5 @@
     <string name="available_updates">Atualizações Disponíveis</string>
     <string name="could_not_open_the_app">Não foi possível abrir o app.</string>
     <string name="empty_list">Sua lista está vazia</string>
+    <string name="app_not_found">Aplicativo não encontrado, baixando novamente</string>
 </resources>

@@ -1,21 +1,16 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+ -keep,allowobfuscation,allowshrinking interface retrofit2.Call
+ -keep,allowobfuscation,allowshrinking class retrofit2.Response
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+ -keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+-keepattributes Signature, *Annotation*, EnclosingMethod, InnerClasses
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+
+-keep class br.com.sequor.launcher.models.** { *; }
+-keep class br.com.sequor.launcher.data.model.** { *; }
+
+-keepclassmembers class br.com.sequor.launcher.models.** { <fields>; }
+-keepclassmembers class br.com.sequor.launcher.data.models.** { <fields>; }
+
+-keep interface br.com.sequor.launcher.data.remote.** { *; }

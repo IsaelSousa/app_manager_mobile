@@ -14,7 +14,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.isaelsousa.app_manager_device"
+    namespace = "br.com.sequor.launcher"
     compileSdk = 36
 
     signingConfigs {
@@ -31,7 +31,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "dev.isaelsousa.app_manager_device"
+        applicationId = "br.com.sequor.launcher"
         minSdk = 29
         targetSdk = 36
         versionCode = 1
